@@ -1,10 +1,7 @@
 package net.ivanvega.missensoresa
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Point
+import android.graphics.*
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -21,7 +18,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     private var mSensor: Sensor? = null
     private lateinit var sensorManager: SensorManager
     private var mLight: Sensor? = null
-    //val displayMetrics = resources.displayMetrics
+
     //val width = displayMetrics.widthPixels
     //val height = displayMetrics.heightPixels
 
@@ -155,7 +152,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
 class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
 
-     var xPos =
+     //val ballIcon: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.ball)
+     var scoreLeft = 0
+     var scoreRight = 0
+
+    var xPos =
         0f
       var xAcceleration:kotlin.Float = 0f
       var xVelocity:kotlin.Float = 0.0f
@@ -177,18 +178,39 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         // Obtener las dimensiones de la pantalla
         val width = canvas!!.width.toFloat()
         val height = canvas!!.height.toFloat()
+        val goalLeft: RectF = RectF(50f, (height/2 - 100).toFloat(), 150f, (height/2 + 100).toFloat())
+        val goalRight: RectF = RectF(width-150f, (height/2 - 100).toFloat(), width-50f, (height/2 + 100).toFloat())
 
         if(xPos == 0f && yPos == 0f){
             xPos = width / 2f
             yPos = height / 2f
         }
         else {
+
             // Verificar si la pelota está en los límites de la pantalla
             if (xPos > width - 50 || xPos < 50) {
-                xVelocity = -xVelocity // Cambiar la dirección de la pelota
+                xVelocity = -xVelocity * 0.8f // Cambiar la dirección de la pelota
             }
             if (yPos > height - 50 || yPos < 50) {
-                yVelocity = -yVelocity // Cambiar la dirección de la pelota
+                yVelocity = -yVelocity * 0.8f // Cambiar la dirección de la pelota
+            }
+
+            // Verificar si la pelota colisiona con la portería izquierda
+            if (goalLeft.contains(xPos.toInt().toFloat(), yPos.toInt().toFloat())) {
+                // Contar un gol para el equipo de la derecha
+                scoreRight++
+                // Colocar la pelota en el centro de la pantalla
+                xPos = width / 2f
+                yPos = height / 2f
+            }
+
+            // Verificar si la pelota colisiona con la portería derecha
+            if (goalRight.contains(xPos.toInt().toFloat(), yPos.toInt().toFloat())) {
+                // Contar un gol para el equipo de la izquierda
+                scoreLeft++
+                // Colocar la pelota en el centro de la pantalla
+                xPos = width / 2f
+                yPos = height / 2f
             }
         }
         // Actualizar la posición de la pelota
@@ -198,7 +220,18 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
 
         //canvas!!.drawLine(200F, 200F, 500F, 200F, pincel)
         canvas!!.drawCircle(xPos, yPos,50.0F, pincel)
+
+        // Dibujar la pelota $aun no jala$
+        //canvas!!.drawBitmap(ballImage, xPos - ballImage.width/2f, yPos - ballImage.height/2f, null)
+
+        // Dibujar las porterías
+        canvas!!.drawRect(goalLeft, pincel)
+        canvas!!.drawRect(goalRight, pincel)
+
         //canvas!!.drawText("Este es un texto dibujado",400F,400F,pincel)
+
+        // Dibujar el marcador
+        canvas!!.drawText("$scoreLeft - $scoreRight", width/2f, 50f, pincel)
 
         invalidate()
     }
