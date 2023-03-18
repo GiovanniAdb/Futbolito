@@ -178,15 +178,19 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         val width = canvas!!.width.toFloat()
         val height = canvas!!.height.toFloat()
 
-        // Verificar si la pelota está en los límites de la pantalla
-      /*  if (xPos > width - 50 || xPos < 50) {
-            xVelocity = -xVelocity // Cambiar la dirección de la pelota
+        if(xPos == 0f && yPos == 0f){
+            xPos = width / 2f
+            yPos = height / 2f
         }
-        if (yPos > height - 50 || yPos < 50) {
-            yVelocity = -yVelocity // Cambiar la dirección de la pelota
+        else {
+            // Verificar si la pelota está en los límites de la pantalla
+            if (xPos > width - 50 || xPos < 50) {
+                xVelocity = -xVelocity // Cambiar la dirección de la pelota
+            }
+            if (yPos > height - 50 || yPos < 50) {
+                yVelocity = -yVelocity // Cambiar la dirección de la pelota
+            }
         }
-       */
-
         // Actualizar la posición de la pelota
         xPos += xVelocity
         yPos += yVelocity
