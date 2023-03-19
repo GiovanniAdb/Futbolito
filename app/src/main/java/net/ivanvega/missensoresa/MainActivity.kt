@@ -11,11 +11,13 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
+import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat.getSystemService
 
 // Constante que define el número de goles necesarios para ganar
 const val GOALS_TO_WIN = 5
@@ -68,27 +70,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        /*
-        leftScoreTextView = findViewById(R.id.leftScore)
-        rightScoreTextView = findViewById(R.id.rightScore)
-        */
-
-        /*
-        // Obtener el ImageView
-        val imageView = findViewById<ImageView>(R.id.imageView)
-
-        // Cargar la imagen desde los recursos de la aplicación
-        imageView.setImageResource(R.drawable.cancha)
-
-        // Configurar el ImageView para que se ajuste al tamaño de la pantalla
-        imageView.adjustViewBounds = true
-        imageView.scaleType = ImageView.ScaleType.FIT_XY
-
-        // Agregar el ImageView al RelativeLayout
-        val relativeLayout = findViewById<RelativeLayout>(R.id.rrelativeLayout)
-        relativeLayout.addView(imageView, 0)
-        */
 
         miViewDibujado = MiViewDibujado(this)
 
@@ -193,10 +174,11 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         textAlign = Paint.Align.CENTER
     }
     init {
-        pincel.setColor(Color.RED)
+        pincel.setColor(Color.WHITE)
         // Cargar la imagen de fondo desde los recursos de tu proyecto
         //backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.cancha)
     }
+
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
@@ -205,30 +187,41 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         val width = canvas!!.width.toFloat()
         val height = canvas!!.height.toFloat()
 
-        //Traer el diseño de la cancha
-        //val canchaBitmap = BitmapFactory.decodeResource(resources, R.drawable.cancha)
-        //val scaledBitmap = Bitmap.createScaledBitmap(canchaBitmap, screenWidth, screenHeight, true)
+        // Cargar la imagen
+        val options = BitmapFactory.Options()
+        options.inScaled = false // evitar escalar la imagen automáticamente
+        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.canchafutbol, options)
+
+        // Redimensionar la imagen al tamaño de la pantalla
+        val canchaRedimensionadaBitmap = Bitmap.createScaledBitmap(bitmap, width.toInt(), height.toInt(), true)
 
         //Traer el diseño del balon
         val ballBitmap = BitmapFactory.decodeResource(resources, R.drawable.balon)
         val ballScaledBitmap = Bitmap.createScaledBitmap(ballBitmap, 100, 100, true)
 
         // Declarar los RectF de las porterías
-        val goalLeft: RectF = RectF((width/2 - 100).toFloat(), 50f, (width/2 + 100).toFloat(), 150f)
-        val goalRight: RectF = RectF((width/2 - 100).toFloat(), height - 150f, (width/2 + 100).toFloat(), height - 50f)
-
+        //val rectF = RectF(left, top, right, bottom)
+        val goalLeft: RectF = RectF((width/2 - 65).toFloat(), 2f, (width/2 + 65).toFloat(), 40f)
+        val goalRight: RectF = RectF((width/2 - 65).toFloat(), height - 40, (width/2 + 65).toFloat(), height - 0f)
 
         if(xPos == 0f && yPos == 0f){
             xPos = width / 2f
             yPos = height / 2f
         }
         else {
-
             // Verificar si la pelota está en los límites de la pantalla
-            if (xPos > width - 50 || xPos < 50) {
+            if (xPos > width - 50) {
+                xPos = width - 50 // Establecer la posición de la pelota dentro de los límites
+                xVelocity = -xVelocity * 0.8f // Cambiar la dirección de la pelota
+            } else if (xPos < 50) {
+                xPos = 50f // Establecer la posición de la pelota dentro de los límites
                 xVelocity = -xVelocity * 0.8f // Cambiar la dirección de la pelota
             }
-            if (yPos > height - 50 || yPos < 50) {
+            if (yPos > height - 20) {
+                yPos = height - 40 // Establecer la posición de la pelota dentro de los límites
+                yVelocity = -yVelocity * 0.8f // Cambiar la dirección de la pelota
+            } else if (yPos < 20) {
+                yPos = 30f // Establecer la posición de la pelota dentro de los límites
                 yVelocity = -yVelocity * 0.8f // Cambiar la dirección de la pelota
             }
 
@@ -237,6 +230,10 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
                 // Contar un gol para el equipo de la derecha
                 scoreRight++
 
+                if (scoreRight >= GOALS_TO_WIN) {
+                    mostrarGanador("Derecha")
+                    scoreRight=0
+                }
 
                 // Colocar la pelota en el centro de la pantalla
                 xPos = width / 2f
@@ -247,30 +244,26 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
             if (goalRight.contains(xPos.toInt().toFloat(), yPos.toInt().toFloat())) {
                 // Contar un gol para el equipo de la izquierda
                 scoreLeft++
+
+                if (scoreLeft >= GOALS_TO_WIN) {
+                    mostrarGanador("Izquierda")
+                    scoreLeft=0
+                }
+
                 // Colocar la pelota en el centro de la pantalla
                 xPos = width / 2f
                 yPos = height / 2f
-            }
 
-            /*
-            // Verificar si el equipo ha alcanzado el número de goles necesario para ganar
-            if (scoreLeft >= GOALS_TO_WIN || scoreRight >= GOALS_TO_WIN) {
-
-                // Mostrar un mensaje de victoria
-                val winner = if (scoreLeft >= GOALS_TO_WIN) "left" else "right"
-                Toast.makeText(MainActivity(), "¡El equipo $winner ha ganado!", Toast.LENGTH_SHORT).show()
             }
-            */
         }
+
         // Actualizar la posición de la pelota
         xPos += xVelocity
         yPos += yVelocity
 
-        // Dibujar la imagen de fondo
-        //canvas?.drawBitmap(scaledBitmap, 0f, 0f, null)
 
-        // Dibujar fondo negro
-        canvas?.drawColor(Color.GREEN)
+        // Dibujar la imagen en el canvas
+        canvas?.drawBitmap(canchaRedimensionadaBitmap, 0f, 0f, null)
 
         // Dibujar la pelota
         canvas!!.drawBitmap(ballScaledBitmap, xPos - ballScaledBitmap.width/2, yPos - ballScaledBitmap.height/2, null)
@@ -280,7 +273,9 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         canvas!!.drawRect(goalRight, pincel)
 
         // Dibujar el marcador
-        canvas!!.drawText("$scoreLeft - $scoreRight", width - 100f, height / 2f, paint)
+        canvas.rotate(-90f, width - 65, height / 2.05f) // Girar el lienzo -90 grados
+        canvas!!.drawText("$scoreRight - $scoreLeft", width - 100f, height / 2f, paint)
+        //canvas.drawText("$scoreRight - $scoreLeft", width / 2f, height - 100f, paint) // Dibujar el texto en la posición deseada
         invalidate()
     }
 
@@ -328,6 +323,9 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         yPos += yVelocity
     }
 
+    fun mostrarGanador(winner: String) {
+        Toast.makeText(context, "¡El equipo $winner ha ganado!", Toast.LENGTH_LONG).show()
+    }
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
         //TODO("Not yet implemented")
