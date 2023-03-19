@@ -7,10 +7,22 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
+import android.util.DisplayMetrics
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.ImageView
+import android.widget.RelativeLayout
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
+// Constante que define el número de goles necesarios para ganar
+const val GOALS_TO_WIN = 5
+
+// Inicializar las puntuaciones de ambos equipos a cero
+var scoreLeft = 0
+var scoreRight = 0
 class MainActivity : AppCompatActivity(), SensorEventListener {
     private val gravity = FloatArray(3)
     private  val linear_acceleration = FloatArray(3)
@@ -22,16 +34,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     //val width = displayMetrics.widthPixels
     //val height = displayMetrics.heightPixels
 
-
-    //private lateinit var binding: ActivityMainBinding
-    /*
-    private var x = 0
-    private var y = 0
-    private var xVelocity = 10
-    private var yVelocity = 10
-    private val ballRadius = 100
-    */
-
     val sensorEventListener : SensorEventListener = object : SensorEventListener{
         override fun onSensorChanged(event: SensorEvent?) {
             //TODO("Not yet implemented")
@@ -39,7 +41,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             // where t is the low-pass filter's time-constant and
             // dT is the event delivery rate.
 
-            val alpha: Float = 0.8f
+            val alpha: Float = 0.3f
 
             // Isolate the force of gravity with the low-pass filter.
             gravity[0] = alpha * gravity[0] + (1 - alpha) * event!!.values[0]
@@ -67,9 +69,31 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-         miViewDibujado = MiViewDibujado(this)
+        /*
+        leftScoreTextView = findViewById(R.id.leftScore)
+        rightScoreTextView = findViewById(R.id.rightScore)
+        */
+
+        /*
+        // Obtener el ImageView
+        val imageView = findViewById<ImageView>(R.id.imageView)
+
+        // Cargar la imagen desde los recursos de la aplicación
+        imageView.setImageResource(R.drawable.cancha)
+
+        // Configurar el ImageView para que se ajuste al tamaño de la pantalla
+        imageView.adjustViewBounds = true
+        imageView.scaleType = ImageView.ScaleType.FIT_XY
+
+        // Agregar el ImageView al RelativeLayout
+        val relativeLayout = findViewById<RelativeLayout>(R.id.rrelativeLayout)
+        relativeLayout.addView(imageView, 0)
+        */
+
+        miViewDibujado = MiViewDibujado(this)
 
         setContentView(miViewDibujado)
+
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
@@ -151,13 +175,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 }
 
 class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
-
-     //val ballIcon: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.ball)
-     var scoreLeft = 0
-     var scoreRight = 0
-
-    var xPos =
-        0f
+    var xPos = 0f
       var xAcceleration:kotlin.Float = 0f
       var xVelocity:kotlin.Float = 0.0f
      var yPos =        0f
@@ -168,8 +186,16 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
     private var gravity = FloatArray(3)
     private  var linear_acceleration = FloatArray(3)
 
+    val paint = Paint().apply {
+        textSize = 100f
+        color = Color.WHITE
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textAlign = Paint.Align.CENTER
+    }
     init {
         pincel.setColor(Color.RED)
+        // Cargar la imagen de fondo desde los recursos de tu proyecto
+        //backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.cancha)
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -178,8 +204,19 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         // Obtener las dimensiones de la pantalla
         val width = canvas!!.width.toFloat()
         val height = canvas!!.height.toFloat()
-        val goalLeft: RectF = RectF(50f, (height/2 - 100).toFloat(), 150f, (height/2 + 100).toFloat())
-        val goalRight: RectF = RectF(width-150f, (height/2 - 100).toFloat(), width-50f, (height/2 + 100).toFloat())
+
+        //Traer el diseño de la cancha
+        //val canchaBitmap = BitmapFactory.decodeResource(resources, R.drawable.cancha)
+        //val scaledBitmap = Bitmap.createScaledBitmap(canchaBitmap, screenWidth, screenHeight, true)
+
+        //Traer el diseño del balon
+        val ballBitmap = BitmapFactory.decodeResource(resources, R.drawable.balon)
+        val ballScaledBitmap = Bitmap.createScaledBitmap(ballBitmap, 100, 100, true)
+
+        // Declarar los RectF de las porterías
+        val goalLeft: RectF = RectF((width/2 - 100).toFloat(), 50f, (width/2 + 100).toFloat(), 150f)
+        val goalRight: RectF = RectF((width/2 - 100).toFloat(), height - 150f, (width/2 + 100).toFloat(), height - 50f)
+
 
         if(xPos == 0f && yPos == 0f){
             xPos = width / 2f
@@ -199,6 +236,8 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
             if (goalLeft.contains(xPos.toInt().toFloat(), yPos.toInt().toFloat())) {
                 // Contar un gol para el equipo de la derecha
                 scoreRight++
+
+
                 // Colocar la pelota en el centro de la pantalla
                 xPos = width / 2f
                 yPos = height / 2f
@@ -212,27 +251,36 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
                 xPos = width / 2f
                 yPos = height / 2f
             }
+
+            /*
+            // Verificar si el equipo ha alcanzado el número de goles necesario para ganar
+            if (scoreLeft >= GOALS_TO_WIN || scoreRight >= GOALS_TO_WIN) {
+
+                // Mostrar un mensaje de victoria
+                val winner = if (scoreLeft >= GOALS_TO_WIN) "left" else "right"
+                Toast.makeText(MainActivity(), "¡El equipo $winner ha ganado!", Toast.LENGTH_SHORT).show()
+            }
+            */
         }
         // Actualizar la posición de la pelota
         xPos += xVelocity
         yPos += yVelocity
-        //canvas!!.drawCircle(xPos, yPos,50.0F, pincel)
 
-        //canvas!!.drawLine(200F, 200F, 500F, 200F, pincel)
-        canvas!!.drawCircle(xPos, yPos,50.0F, pincel)
+        // Dibujar la imagen de fondo
+        //canvas?.drawBitmap(scaledBitmap, 0f, 0f, null)
 
-        // Dibujar la pelota $aun no jala$
-        //canvas!!.drawBitmap(ballImage, xPos - ballImage.width/2f, yPos - ballImage.height/2f, null)
+        // Dibujar fondo negro
+        canvas?.drawColor(Color.GREEN)
+
+        // Dibujar la pelota
+        canvas!!.drawBitmap(ballScaledBitmap, xPos - ballScaledBitmap.width/2, yPos - ballScaledBitmap.height/2, null)
 
         // Dibujar las porterías
         canvas!!.drawRect(goalLeft, pincel)
         canvas!!.drawRect(goalRight, pincel)
 
-        //canvas!!.drawText("Este es un texto dibujado",400F,400F,pincel)
-
         // Dibujar el marcador
-        canvas!!.drawText("$scoreLeft - $scoreRight", width/2f, 50f, pincel)
-
+        canvas!!.drawText("$scoreLeft - $scoreRight", width - 100f, height / 2f, paint)
         invalidate()
     }
 
@@ -279,6 +327,7 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         yVelocity -= yAcceleration * 0.8f
         yPos += yVelocity
     }
+
 
     override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
         //TODO("Not yet implemented")
