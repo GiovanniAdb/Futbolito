@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
             // where t is the low-pass filter's time-constant and
             // dT is the event delivery rate.
 
-            val alpha: Float = 0.3f
+            val alpha: Float = 0.4f
 
             // Isolate the force of gravity with the low-pass filter.
             gravity[0] = alpha * gravity[0] + (1 - alpha) * event!!.values[0]
@@ -177,27 +177,26 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         pincel.setColor(Color.WHITE)
         // Cargar la imagen de fondo desde los recursos de tu proyecto
         //backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.cancha)
+
     }
-
-
+    // Cargar la imagen
+    val options = BitmapFactory.Options()
+    val bitmap = BitmapFactory.decodeResource(resources, R.drawable.canchafutbol, options)
+    val ballBitmap = BitmapFactory.decodeResource(resources, R.drawable.balon)
+    val ballScaledBitmap = Bitmap.createScaledBitmap(ballBitmap, 100, 100, true)
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
         // Obtener las dimensiones de la pantalla
         val width = canvas!!.width.toFloat()
         val height = canvas!!.height.toFloat()
-
-        // Cargar la imagen
-        val options = BitmapFactory.Options()
-        options.inScaled = false // evitar escalar la imagen automáticamente
-        val bitmap = BitmapFactory.decodeResource(resources, R.drawable.canchafutbol, options)
-
         // Redimensionar la imagen al tamaño de la pantalla
         val canchaRedimensionadaBitmap = Bitmap.createScaledBitmap(bitmap, width.toInt(), height.toInt(), true)
+        options.inScaled = false // evitar escalar la imagen automáticamente
 
         //Traer el diseño del balon
-        val ballBitmap = BitmapFactory.decodeResource(resources, R.drawable.balon)
-        val ballScaledBitmap = Bitmap.createScaledBitmap(ballBitmap, 100, 100, true)
+
+
 
         // Declarar los RectF de las porterías
         //val rectF = RectF(left, top, right, bottom)
@@ -233,6 +232,7 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
                 if (scoreRight >= GOALS_TO_WIN) {
                     mostrarGanador("Derecha")
                     scoreRight=0
+                    scoreLeft=0
                 }
 
                 // Colocar la pelota en el centro de la pantalla
@@ -248,6 +248,7 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
                 if (scoreLeft >= GOALS_TO_WIN) {
                     mostrarGanador("Izquierda")
                     scoreLeft=0
+                    scoreRight=0
                 }
 
                 // Colocar la pelota en el centro de la pantalla
@@ -258,8 +259,8 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         }
 
         // Actualizar la posición de la pelota
-        xPos += xVelocity
-        yPos += yVelocity
+        xPos += xVelocity *0.7f
+        yPos += yVelocity *0.7f
 
 
         // Dibujar la imagen en el canvas
@@ -285,7 +286,7 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
         // where t is the low-pass filter's time-constant and
         // dT is the event delivery rate.
 
-        val alpha: Float = 0.96f
+        val alpha: Float = 0.6f
 
         // Isolate the force of gravity with the low-pass filter.
         gravity[0] = alpha * gravity[0] + (1 - alpha) * event!!.values[0]
@@ -314,12 +315,12 @@ class  MiViewDibujado (ctx: Context) : View(ctx), SensorEventListener {
     }
 
     fun updateX() {
-        xVelocity -= xAcceleration * 0.8f
+        xVelocity -= xAcceleration * 0.6f
         xPos += xVelocity
     }
 
     fun updateY() {
-        yVelocity -= yAcceleration * 0.8f
+        yVelocity -= yAcceleration * 0.6f
         yPos += yVelocity
     }
 
